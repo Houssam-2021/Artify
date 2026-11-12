@@ -1,0 +1,44 @@
+# Build output
+.gradle/
+.kotlin/
+**/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.apks
+output-metadata.json
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Machine-specific config (contains SDK paths, sometimes credentials)
+local.properties
+
+# ---------------------------------------------------------------
+# SECRETS — never commit any of these. Release signing material
+# lives outside the repository (see SECURITY.md / docs/RELEASING.md).
+# ---------------------------------------------------------------
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+*.der
+*.crt
+*.p8
+*.mobileprovision
+keystore.properties
+signing.properties
+release-signing/
+google-services.json
+service-account*.json
+*.env
+.env*
+!/.env.example

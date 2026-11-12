@@ -1,0 +1,58 @@
+name: Release
+
+# Builds a signed release only when a maintainer pushes a version tag.
+# The keystore lives ONLY in GitHub encrypted secrets — never in the repo.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: release   # protect with required reviewers in repo settings
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - name: Secret and signing-material scan
+        run: python3 security/check_secrets.py
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+
+      - name: Restore keystore from secrets (outside the workspace)
+        env:
+          KEYSTORE_B64: ${{ secrets.ARTIFY_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then echo "No signing secret configured"; exit 1; fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/artify-release.jks"
+          echo "ARTIFY_KEYSTORE_FILE=$RUNNER_TEMP/artify-release.jks" >> "$GITHUB_ENV"
+
+      - name: Build signed release bundle and APK
+        env:
+          ARTIFY_KEYSTORE_PASSWORD: ${{ secrets.ARTIFY_KEYSTORE_PASSWORD }}
+          ARTIFY_KEY_ALIAS: ${{ secrets.ARTIFY_KEY_ALIAS }}
+          ARTIFY_KEY_PASSWORD: ${{ secrets.ARTIFY_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon :app:testReleaseUnitTest :app:bundleRelease :app:assembleRelease
+
+      - name: Remove keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/artify-release.jks"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: artify-release
+          path: |
+            app/build/outputs/bundle/release/*.aab
+            app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 14
