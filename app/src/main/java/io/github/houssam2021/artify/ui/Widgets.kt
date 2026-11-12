@@ -67,12 +67,12 @@ fun ToolButton(
 @Composable
 fun VerticalSlider(
     value: Float, onChange: (Float) -> Unit, onStart: () -> Unit = {}, onEnd: () -> Unit = {},
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier, height: Dp = 150.dp,
 ) {
     val current by rememberUpdatedState(value)
     val change by rememberUpdatedState(onChange)
     Box(
-        modifier.width(34.dp).height(150.dp).clip(RoundedCornerShape(17.dp)).background(Color(0x33FFFFFF))
+        modifier.width(if (height < 150.dp) 28.dp else 34.dp).height(height).clip(RoundedCornerShape(17.dp)).background(Color(0x33FFFFFF))
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
                     onDragStart = { onStart() },

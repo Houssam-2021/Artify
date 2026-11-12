@@ -104,7 +104,7 @@ fun EditorScreen(ctl: EditorController, onClose: () -> Unit) {
 
         if (!ctl.uiHidden) {
             TopBar(ctl, compact, onClose)
-            SideBar(ctl, Modifier.align(if (ctl.settings.leftHanded) Alignment.CenterEnd else Alignment.CenterStart))
+            SideBar(ctl, compact, Modifier.align(if (ctl.settings.leftHanded) Alignment.CenterEnd else Alignment.CenterStart))
             Column(
                 Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -216,25 +216,27 @@ private fun pickTool(ctl: EditorController, t: Tool) {
 }
 
 @Composable
-private fun SideBar(ctl: EditorController, modifier: Modifier) {
+private fun SideBar(ctl: EditorController, compact: Boolean, modifier: Modifier) {
+    val sliderH = if (compact) 110.dp else 150.dp
+    val btn = if (compact) 36.dp else 40.dp
     var showSize by remember { mutableStateOf(false) }
     var showOpacity by remember { mutableStateOf(false) }
     val b = ctl.currentBrush
     val lo = b.minSize; val hi = b.maxSize
     val t = if (hi > lo) (ln(ctl.brushSize / lo) / ln(hi / lo)).coerceIn(0f, 1f) else 0f
-    Box(modifier.padding(horizontal = 6.dp)) {
+    Box(modifier.padding(horizontal = if (compact) 4.dp else 6.dp)) {
         Column(
-            Modifier.clip(RoundedCornerShape(24.dp)).background(ChromeBg).padding(vertical = 10.dp, horizontal = 5.dp),
+            Modifier.clip(RoundedCornerShape(24.dp)).background(ChromeBg).padding(vertical = 8.dp, horizontal = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             VerticalSlider(t, onChange = { v -> ctl.brushSize = lo * (hi / lo).pow(v) },
-                onStart = { showSize = true }, onEnd = { showSize = false })
-            Spacer(Modifier.height(14.dp))
+                onStart = { showSize = true }, onEnd = { showSize = false }, height = sliderH)
+            Spacer(Modifier.height(12.dp))
             VerticalSlider(ctl.brushOpacity, onChange = { ctl.brushOpacity = it },
-                onStart = { showOpacity = true }, onEnd = { showOpacity = false })
-            Spacer(Modifier.height(10.dp))
-            ToolButton(Icons.AutoMirrored.Rounded.Undo, "Undo", enabled = ctl.canUndo, size = 40.dp) { ctl.undo() }
-            ToolButton(Icons.AutoMirrored.Rounded.Redo, "Redo", enabled = ctl.canRedo, size = 40.dp) { ctl.redo() }
+                onStart = { showOpacity = true }, onEnd = { showOpacity = false }, height = sliderH)
+            Spacer(Modifier.height(8.dp))
+            ToolButton(Icons.AutoMirrored.Rounded.Undo, "Undo", enabled = ctl.canUndo, size = btn) { ctl.undo() }
+            ToolButton(Icons.AutoMirrored.Rounded.Redo, "Redo", enabled = ctl.canRedo, size = btn) { ctl.redo() }
         }
         if (showSize || showOpacity) {
             val label = if (showSize) "%.1f px".format(ctl.brushSize) else "${(ctl.brushOpacity * 100).toInt()}%"
